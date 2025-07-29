@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindMirror | Journal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌗</button>
+  <div class="container">
+    <h2>Write Your Thoughts</h2>
+    <p id="todayDate"></p>
+    <textarea id="entry" placeholder="How are you feeling today?" oninput="updateWordCount()"></textarea>
+    <p id="wordCount">Words: 0</p>
+    <p id="charCount">Characters: 0</p>
+    <button onclick="submitEntry()">Save Entry</button>
+    <p id="sentimentResult"></p>
+    <a href="dashboard.html">📊 Go to Mood Dashboard</a>
+  </div>
+  <script src="js/journal.js"></script>
+</body>
+</html>
