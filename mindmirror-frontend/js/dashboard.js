@@ -1,39 +1,60 @@
-const moodData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-  datasets: [{
-    label: 'Mood Trend',
-    data: [2, 1, 0, 1, 2], // 0: Negative, 1: Neutral, 2: Positive
-    backgroundColor: ['red', 'orange', 'green', 'orange', 'green'],
-    borderColor: '#444',
-    borderWidth: 1
-  }]
-};
+const API_BASE = "http://localhost:5000/api/journal";
 
-const config = {
-  type: 'bar',
-  data: moodData,
-  options: {
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 2,
-        ticks: {
-          callback: value => ['Negative', 'Neutral', 'Positive'][value]
+async function loadDashboard() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Please login first.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/all`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error fetching data");
+
+    const labels = data.entries.map(e => new Date(e.date).toLocaleDateString());
+    const values = data.entries.map(e =>
+      e.mood === "Positive" ? 2 : e.mood === "Neutral" ? 1 : 0
+    );
+
+    const config = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Mood Trend',
+          data: values,
+          backgroundColor: values.map(v => v === 2 ? "green" : v === 1 ? "orange" : "red"),
+          borderColor: '#444',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 2,
+            ticks: {
+              callback: value => ['Negative', 'Neutral', 'Positive'][value]
+            }
+          }
         }
       }
-    }
+    };
+
+    new Chart(document.getElementById('moodChart'), config);
+
+  } catch (err) {
+    alert(err.message);
   }
-};
-
-new Chart(document.getElementById('moodChart'), config);
-
-// Dark mode handler
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
 }
 
 window.onload = () => {
+  loadDashboard();
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark-mode");
   }

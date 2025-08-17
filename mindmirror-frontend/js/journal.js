@@ -1,64 +1,37 @@
-function updateWordCount() {
-  const text = document.getElementById("entry").value;
-  const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
-  const chars = text.length;
+const API_BASE = "http://localhost:5000/api/journal";
 
-  document.getElementById("wordCount").innerText = `Words: ${words}`;
-  document.getElementById("charCount").innerText = `Characters: ${chars}`;
-}
-
-function submitEntry() {
+async function submitEntry() {
   const entry = document.getElementById("entry").value.trim();
   if (!entry) {
     alert("Please write something before saving.");
     return;
   }
 
-  // Dummy sentiment detection
-  let mood = "Neutral";
-  if (entry.includes("happy")) mood = "Positive";
-  else if (entry.includes("sad")) mood = "Negative";
-
-  document.getElementById("sentimentResult").innerText = `Detected Mood: ${mood}`;
-  alert("Entry saved!");
-
-  document.getElementById("entry").value = "";
-  updateWordCount();
-}
-
-// Theme and date
-window.onload = () => {
-  const today = new Date();
-  const dateStr = today.toLocaleDateString(undefined, {
-    weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
-  });
-  document.getElementById("todayDate").innerText = `🗓️ ${dateStr}`;
-  updateWordCount();
-
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark-mode");
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Please login first.");
+    window.location.href = "index.html";
+    return;
   }
-};
 
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-}
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-}
+  try {
+    const res = await fetch(`${API_BASE}/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text: entry }),
+    });
 
-window.onload = () => {
-  const today = new Date();
-  const dateStr = today.toLocaleDateString(undefined, {
-    weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
-  });
-  document.getElementById("todayDate").innerText = `🗓️ ${dateStr}`;
-  updateWordCount();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error saving entry");
 
-  // Apply saved theme
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark-mode");
+    document.getElementById("sentimentResult").innerText = `Detected Mood: ${data.mood}`;
+    alert("Entry saved!");
+    document.getElementById("entry").value = "";
+    updateWordCount();
+  } catch (err) {
+    alert(err.message);
   }
-};
+}
